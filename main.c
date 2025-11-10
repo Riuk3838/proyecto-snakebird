@@ -32,8 +32,11 @@ int main()
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "snakebird");
-    terrain = {
-        
+    for(int i=0; i<10; i++)
+    {
+        terrain[i].position.x = i*50;
+        terrain[i].position.y = 200;
+        terrain[i].size = 50;
     }
     
     
@@ -81,7 +84,7 @@ static void UpdateDrawFrame(void)
 
 int collision (Vector2 point, square_collider col)
 {
-    if(point.x>col.position.x-20 && point.x<col.position.x+20 && point.y>col.position.y-20 && point.y<col.position.y+20)
+    if(point.x>col.position.x && point.x<col.position.x+col.size && point.y>col.position.y && point.y<col.position.y+col.size)
     {
         return 1;
     }
