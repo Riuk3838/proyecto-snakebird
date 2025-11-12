@@ -16,6 +16,18 @@ int collision (Vector2 point, square_collider col);
 
 square_collider terrain[10]; 
 
+Texture2D cara, cuerpo, cola;
+
+typedef struct gusano
+{
+    segment body[10];
+} gusano;
+
+typedef struct segment{
+    Vector2 position;
+    
+} segment;
+
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
@@ -38,6 +50,8 @@ int main()
         terrain[i].position.y = 200;
         terrain[i].size = 50;
     }
+    
+    cara = LoadTexture("cara.png");
     
     
     //--------------------------------------------------------------------------------------
