@@ -18,6 +18,16 @@ square_collider terrain[10];
 
 Texture2D cara, cuerpo, cola;
 
+typedef struct gusano
+{
+    segment body[10];
+} gusano;
+
+typedef struct segment{
+    Vector2 position;
+    
+} segment;
+
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
