@@ -5,7 +5,23 @@
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
+typedef enum Direction{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+} Direction;
 
+typedef enum BodyType{
+    CARA,
+    CUERPO,
+    ESQUINA,
+    COLA
+} BodyType;
+
+Rectangle sourceRec = { 0.0f, 0.0f, 32.0f, 32.0f };
+
+static Vector2 origin = {25,25};
 //structura
 typedef struct square_collider{ 
     Vector2 position;
@@ -16,22 +32,28 @@ int collision (Vector2 point, square_collider col);
 
 square_collider terrain[10]; 
 
-Texture2D cara, cuerpo, cola;
-
-typedef struct gusano
-{
-    segment body[10];
-} gusano;
+Texture2D cara, cuerpo, esquina, cola;
 
 typedef struct segment{
     Vector2 position;
-    
+    Direction dir;
+    BodyType type;
 } segment;
+
+typedef struct gusano
+{
+    int size;
+    segment body[10];
+} gusano;
+
+gusano snakebird;
+
 
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
 static void UpdateDrawFrame(void);          // Update and draw one frame
+static void Move(Direction dir);
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -43,6 +65,7 @@ int main()
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+
     InitWindow(screenWidth, screenHeight, "snakebird");
     for(int i=0; i<10; i++)
     {
@@ -51,9 +74,16 @@ int main()
         terrain[i].size = 50;
     }
     
-    cara = LoadTexture("cara.png");
+    cara = LoadTexture("Images/cara-l.png");
+    cuerpo = LoadTexture("Images/body-h.png");
+    esquina = LoadTexture("Images/body-ul.png");
+    cola = LoadTexture("Images/tail-l.png");
     
-    
+    snakebird.size = 2;
+    snakebird.body[0].position = (Vector2){25,25};
+    snakebird.body[1].position = (Vector2){75,25};
+    snakebird.body[0].dir = LEFT;
+    snakebird.body[1].dir = LEFT;
     //--------------------------------------------------------------------------------------
 
 #if defined(PLATFORM_WEB)
@@ -80,6 +110,10 @@ int main()
 // Update and draw game frame
 static void UpdateDrawFrame(void)
 {
+    if(IsKeyPressed(KEY_UP)) Move(UP);
+    if(IsKeyPressed(KEY_DOWN)) Move(DOWN);
+    if(IsKeyPressed(KEY_LEFT)) Move(LEFT);
+    if(IsKeyPressed(KEY_RIGHT)) Move(RIGHT);
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
@@ -90,8 +124,20 @@ static void UpdateDrawFrame(void)
         {
             DrawRectangle(terrain[i].position.x, terrain[i].position.y, terrain[i].size, terrain[i].size, GREEN);
         }
-    
 
+        for(int i=0; i<snakebird.size; i++)
+        {
+            segment seg = snakebird.body[i];
+            if(i==0){
+                DrawTexturePro(cara, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
+            }
+            else if(i==snakebird.size-1){
+                DrawTexturePro(cola, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
+            }
+            else{   
+                DrawTexturePro(cuerpo, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
+            }
+        }
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
@@ -104,3 +150,24 @@ int collision (Vector2 point, square_collider col)
     }
     return 0;
 }
+
+static void Move(Direction dir){
+    for (int i = 9; i >= 1; i--)
+    {
+        snakebird.body[i].position.x = snakebird.body[i-1].position.x;
+        snakebird.body[i].position.y = snakebird.body[i-1].position.y;
+        if(i==1){
+            if( (snakebird.body[i].dir == LEFT && dir == DOWN || dir == UP) ||
+                (snakebird.body[i].dir == RIGHT && dir == DOWN || dir == UP) ||
+                (snakebird.body[i].dir == UP && dir == LEFT || dir == RIGHT) ||
+                (snakebird.body[i].dir == DOWN && dir == RIGHT || dir == LEFT))
+                {
+                    snakebird.body[i].type = ESQUINA;
+                }
+        }
+        snakebird.body[i].dir = snakebird.body[i-1].dir;
+    }
+    snakebird.body[0].position.x += dir==LEFT ? -50 : dir==RIGHT ? 50 : 0;
+    snakebird.body[0].position.y += dir==UP ? -50 : dir==DOWN ? 50 : 0;
+    snakebird.body[0].dir = dir;
+ }
