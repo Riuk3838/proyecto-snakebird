@@ -6,10 +6,10 @@
     #include <emscripten/emscripten.h>
 #endif
 typedef enum Direction{
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
+    UP = 0,
+    DOWN = 1,
+    LEFT = 2,
+    RIGHT = 4 
 } Direction;
 
 typedef enum BodyType{
@@ -54,6 +54,7 @@ gusano snakebird;
 //----------------------------------------------------------------------------------
 static void UpdateDrawFrame(void);          // Update and draw one frame
 static void Move(Direction dir);
+static void Grow(Direction dir);
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -79,11 +80,17 @@ int main()
     esquina = LoadTexture("Images/body-ul.png");
     cola = LoadTexture("Images/tail-l.png");
     
-    snakebird.size = 2;
+    snakebird.size = 3;
     snakebird.body[0].position = (Vector2){25,25};
     snakebird.body[1].position = (Vector2){75,25};
+    snakebird.body[2].position = (Vector2){125,25};
     snakebird.body[0].dir = LEFT;
     snakebird.body[1].dir = LEFT;
+    snakebird.body[2].dir = LEFT;
+    snakebird.body[0].type = CARA;
+    snakebird.body[1].type = CUERPO;
+    snakebird.body[2].type = COLA;
+
     //--------------------------------------------------------------------------------------
 
 #if defined(PLATFORM_WEB)
@@ -128,15 +135,9 @@ static void UpdateDrawFrame(void)
         for(int i=0; i<snakebird.size; i++)
         {
             segment seg = snakebird.body[i];
-            if(i==0){
-                DrawTexturePro(cara, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
-            }
-            else if(i==snakebird.size-1){
-                DrawTexturePro(cola, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
-            }
-            else{   
-                DrawTexturePro(cuerpo, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
-            }
+           
+            DrawTexturePro(seg.type == CARA ? cara : seg.type == CUERPO ? cuerpo : seg.type == ESQUINA ? esquina : cola, sourceRec, (Rectangle){seg.position.x,seg.position.y,50,50}, origin, 0, WHITE);
+            
         }
     EndDrawing();
     //----------------------------------------------------------------------------------
@@ -156,18 +157,28 @@ static void Move(Direction dir){
     {
         snakebird.body[i].position.x = snakebird.body[i-1].position.x;
         snakebird.body[i].position.y = snakebird.body[i-1].position.y;
-        if(i==1){
-            if( (snakebird.body[i].dir == LEFT && dir == DOWN || dir == UP) ||
-                (snakebird.body[i].dir == RIGHT && dir == DOWN || dir == UP) ||
-                (snakebird.body[i].dir == UP && dir == LEFT || dir == RIGHT) ||
-                (snakebird.body[i].dir == DOWN && dir == RIGHT || dir == LEFT))
-                {
-                    snakebird.body[i].type = ESQUINA;
-                }
-        }
         snakebird.body[i].dir = snakebird.body[i-1].dir;
+        snakebird.body[i].type = snakebird.body[i-1].type;
     }
+    switch (snakebird.body[0].dir)
+    {
+    case UP:
+    case DOWN: 
+        snakebird.body[1].type = (dir == LEFT || dir == RIGHT) ? ESQUINA : CUERPO;
+        break;
+    case LEFT:
+    case RIGHT:
+        snakebird.body[1].type = (dir == UP || dir == DOWN) ? ESQUINA : CUERPO;
+        break;
+    }
+    snakebird.body[snakebird.size-1].type = COLA;
     snakebird.body[0].position.x += dir==LEFT ? -50 : dir==RIGHT ? 50 : 0;
     snakebird.body[0].position.y += dir==UP ? -50 : dir==DOWN ? 50 : 0;
     snakebird.body[0].dir = dir;
+ }
+
+ static void Grow(Direction dir){
+    snakebird.size++;
+    Move(dir);
+    
  }
